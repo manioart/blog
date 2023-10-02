@@ -47,11 +47,23 @@ class PostController extends AbstractController
     }
 
     #[Route('/{_locale}/post/{id}/edit', methods: ['GET', 'POST'], name: 'posts.edit')]
-    public function edit($id): Response
+    public function edit(Request $request): Response
     {
         // return $this->redirectToRoute('posts.index');
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        return $this->render('post/edit.html.twig');
+        $post = new Post();
+        $form = $this->createForm(PostType::class, $post);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // $form->getData() holds the submitted values
+            // but, the original `$task` variable has also been updated
+            $post = $form->getData();
+             // ... perform some action, such as saving the task to the database
+             return $this->redirectToRoute('posts.index');
+        }
+        return $this->render('post/edit.html.twig', [
+            'form' => $form,
+        ]);
     }
 
     #[Route('/{_locale}/post/{id}/delete', methods: ['POST'], name: 'posts.delete')]
