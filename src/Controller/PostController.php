@@ -8,23 +8,32 @@ use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Post;
 use App\Form\PostType;
 use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 #[Route('/', requirements: ['_locale' => 'en|pl'])]
 class PostController extends AbstractController
 {
     #[Route('/{_locale}', methods: ['GET'], name: 'posts.index')]
-    public function index(string $_locale = 'en'): Response
+    public function index(Request $request, ManagerRegistry $doctrine, string $_locale = 'en'): Response
     {
-        return $this->render('post/index.html.twig');
+        $posts = $doctrine->getRepository(Post::class)->findAllPosts($request->query->getInt('page', 1));
+
+        return $this->render('post/index.html.twig', [
+            'posts' => $posts
+        ]);
     }
 
     #[Route('/{_locale}/post/new', methods: ['GET', 'POST'], name: 'posts.new')]
-    public function new(Request $request): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $post = new Post();
-        // $post->setTitle('Write a blog post');
-        // $post->setContent('Post content');
+        $post = new Post();
+        $post->setTitle('Write a blog post');
+        $post->setContent('Post content');
+        $post->setUser($this->getUser());
+        $post->setCreatedAt(new \DateTimeImmutable('now'));
         $form = $this->createForm(PostType::class, $post);
         $form->handleRequest($request);
 
@@ -32,7 +41,10 @@ class PostController extends AbstractController
             // $form->getData() holds the submitted values
             // but, the original `$task` variable has also been updated
             $post = $form->getData();
-             // ... perform some action, such as saving the task to the database
+            
+            $entityManager->persist($post);
+            $entityManager->flush();
+
             return $this->redirectToRoute('posts.index');
         }
         return $this->render('post/new.html.twig',[
