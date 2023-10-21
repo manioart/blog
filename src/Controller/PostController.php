@@ -53,25 +53,25 @@ class PostController extends AbstractController
     }
 
     #[Route('/{_locale}/post/{id}', methods: ['GET'], name: 'posts.show')]
-    public function show($id): Response
+    public function show(Post $post): Response
     {
-        return $this->render('post/show.html.twig');
+        return $this->render('post/show.html.twig',[
+            'post' => $post
+        ]);
     }
 
     #[Route('/{_locale}/post/{id}/edit', methods: ['GET', 'POST'], name: 'posts.edit')]
-    public function edit(Request $request): Response
+    public function edit(Post $post, Request $request, ManagerRegistry $doctrine): Response
     {
-        // return $this->redirectToRoute('posts.index');
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        $post = new Post();
         $form = $this->createForm(PostType::class, $post);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            // $form->getData() holds the submitted values
-            // but, the original `$task` variable has also been updated
             $post = $form->getData();
-             // ... perform some action, such as saving the task to the database
-             return $this->redirectToRoute('posts.index');
+            $entityManager = $doctrine->getManager();
+            $entityManager->persist($post);
+            $entityManager->flush();
+            return $this->redirectToRoute('posts.index');
         }
         return $this->render('post/edit.html.twig', [
             'form' => $form,
@@ -79,16 +79,23 @@ class PostController extends AbstractController
     }
 
     #[Route('/{_locale}/post/{id}/delete', methods: ['POST'], name: 'posts.delete')]
-    public function delete($id): Response
+    public function delete(Post $post, ManagerRegistry $doctrine): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        return new Response('delete post from database');
+        $entityManager = $doctrine->getManager();
+        $entityManager->remove($post);
+        $entityManager->flush();
+        return $this->redirectToRoute('posts.index');
     }
 
     #[Route('/{_locale}/posts/user/{id}', methods: ['GET'], name: 'posts.user')]
-    public function user($id): Response
+    public function user(Request $request, ManagerRegistry $doctrine, $id): Response
     {
-        return $this->render('post/index.html.twig');
+        $posts = $doctrine->getRepository(Post::class)->findAllUserPosts($request->query->getInt('page', 1), $id);
+
+        return $this->render('post/index.html.twig', [
+            'posts' => $posts
+        ]);
     }
 
     #[Route('{_locale}/toggleFollow/{user}', methods: ['GET'], name: 'toggleFollow')]

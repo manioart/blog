@@ -19,7 +19,7 @@ class Post
     #[ORM\Column(length: 255)]
     #[Assert\Type('string')]
     #[Assert\Length(
-        max: 20,
+        max: 100,
         maxMessage: 'Title too long',
     )]
     private ?string $title = null;
@@ -27,7 +27,7 @@ class Post
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\Type('string')]
     #[Assert\Length(
-        max: 1000,
+        max: 3000,
         maxMessage: 'Content too long',
     )]
     private ?string $content = null;

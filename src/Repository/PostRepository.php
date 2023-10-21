@@ -53,6 +53,18 @@ class PostRepository extends ServiceEntityRepository
         return $this->paginator->paginate($dbquery, $page, 3);
     }
 
+    public function findAllUserPosts(int $page,$userId) {
+        $dbquery = $this->createQueryBuilder('p')
+        ->leftJoin('p.user', 'u')
+        ->addSelect('u')
+        ->where('p.user = :id')
+        ->setParameter('id', $userId)
+        ->getQuery()
+        ->getResult();
+
+        return $this->paginator->paginate($dbquery, $page, 3);
+    }
+
 //    /**
 //     * @return Post[] Returns an array of Post objects
 //     */
