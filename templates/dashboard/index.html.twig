@@ -16,18 +16,22 @@
                     <div x-show="tab === 1">
                         <b>{%trans%}People that follow you{%endtrans%}:</b>
                         <ul>
+                        {% for follower in app.user.getFollowers() %}
                             <li>
-                                <a class="hover:text-stone-500" href="{{ path('posts.user', {id:1}) }}">John Smith</a>
+                                <a class="hover:text-stone-500" href="{{ path('posts.user' ,{id: follower.getId()}) }}">{{follower.getName()}}</a>
                             </li>
+                        {% endfor %}
                         </ul>
                     </div>
                     <div x-show="tab === 2">
                         <b>{%trans%}People that you follow{%endtrans%}:</b>
                         <ul class="space-y-4">
+                        {% for following in app.user.getFollowing() %}
                             <li>
-                                <a class="hover:text-stone-500" href="{{ path('posts.user', { id: 1 }) }}">Jane Doe</a>
-                                <a href="{{ path('toggleFollow', { user: 1 }) }}" class="ml-3 inline font-bold text-sm px-4 py-1 text-white rounded bg-blue-500 hover:bg-blue-600">{%trans%}Unfollow{%endtrans%}</a>
+                                <a class="hover:text-stone-500" href="{{ path('posts.user', { id: following.getId() }) }}">{{following.getName()}}</a>
+                                <a href="{{ path('toggleFollow', { user: following.getId() }) }}" class="ml-3 inline font-bold text-sm px-4 py-1 text-white rounded bg-blue-500 hover:bg-blue-600">{%trans%}Unfollow{%endtrans%}</a>
                             </li>
+                        {% endfor %}
                         </ul>
                     </div>
                     <div x-show="tab === 3">

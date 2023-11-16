@@ -7,7 +7,7 @@
 {% block body %}
     {# latest posts #}
     <div class="my-14">
-	    <h1 class="text-6xl tracking-tighter font-bold mb-6">{%trans%}Latest posts{%endtrans%} {{ posts[0].user.name ?? '' }}
+	    <h1 class="text-6xl tracking-tighter font-bold mb-6">{%trans%}Latest posts{%endtrans%} {{ user ?? '' }}
 		</h1>
 		<p class="mb-8 text-gray-500">A blog created with Symfony and Tailwind CSS
 		</p>

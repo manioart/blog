@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Post;
 use App\Form\PostType;
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -53,10 +54,17 @@ class PostController extends AbstractController
     }
 
     #[Route('/{_locale}/post/{id}', methods: ['GET'], name: 'posts.show')]
-    public function show(Post $post): Response
+    public function show(Post $post, EntityManagerInterface $entityManager): Response
     {
+        $isFollowing = $entityManager->getRepository(User::class)->isFollowing($this->getUser(), $post->getUser()) ?? false;
+        $isLiked = $entityManager->getRepository(Post::class)->isLiked($this->getUser(), $post->getId()) ?? false;
+        $isDisliked = $entityManager->getRepository(Post::class)->isDisliked($this->getUser(), $post->getId()) ?? false;
+
         return $this->render('post/show.html.twig',[
-            'post' => $post
+            'post' => $post,
+            'isFollowing' => $isFollowing,
+            'isLiked' => $isLiked,
+            'isDisliked' => $isDisliked,
         ]);
     }
 
@@ -94,16 +102,23 @@ class PostController extends AbstractController
         $posts = $doctrine->getRepository(Post::class)->findAllUserPosts($request->query->getInt('page', 1), $id);
 
         return $this->render('post/index.html.twig', [
-            'posts' => $posts
+            'posts' => $posts,
+            'user' => $posts[0]?->getUser()->getName()
         ]);
     }
 
     #[Route('{_locale}/toggleFollow/{user}', methods: ['GET'], name: 'toggleFollow')]
-    public function toggleFollow($user): Response
+    public function toggleFollow(User $user, EntityManagerInterface $entityManager, Request $request): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-        return new Response(
-            'logic for toggling like/dislike 
-            functionality');
+        $isFollowing = $entityManager->getRepository(User::class)->isFollowing($this->getUser(), $user) ?? false;
+        if ($isFollowing) {
+            $this->getUser()->removeFollowing($user);
+        } else {
+            $this->getUser()->addFollowing($user);
+        }
+        $entityManager->flush();
+        $route = $request->headers->get('referer');
+        return $this->redirect($route);
     }
 }
